@@ -13,11 +13,28 @@
         ul {
             list-style: none;
             padding-left: 0px;
+            width: 200px;
+        }
+
+        li {
+            clear: both;
+        }
+
+        li button {
+            -webkit-appearance: none;
+            border: none;
+            outline: none;
+            color: red;
+            float: right;
+            cursor: pointer;
+            font-size: 18px;
         }
     </style>
 </head>
 
 <body>
+
+    <div id="noNullValue" class="hidden">You must enter something!</div>
 
     <form id="form">
         <div>
@@ -31,19 +48,53 @@
 
     <div id="error" class="hidden">Something's Wrong!</div>
 
+
     <ul id="todos">
         {% for d in data %}
         <li> <input class="checked" type="checkbox" data-id="{{ d.id }}" {% if d.completed %} checked {% endif %}>
-            {{ d.description }}</li>
+            {{ d.description }}
+            <button class="deleted" data-id="{{ d.id }}">&cross;</button>
+        </li>
         {% endfor %}
     </ul>
 
     <script>
+        document.getElementById('form').onsubmit = function (e) {
+            e.preventDefault();
+
+            if (document.getElementById('description').value == '') {
+                document.getElementById('noNullValue').className = '';
+            } else {
+                document.getElementById('noNullValue').className = 'hidden'
+                fetch('/todos/create', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            'description': document.getElementById('description').value
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (jsonResponse) {
+                        // console.log(jsonResponse);
+                        let liItem = document.createElement('li')
+                        liItem.innerHTML = jsonResponse['description']
+                        document.getElementById('todos').appendChild(liItem);
+                        document.getElementById('error').className = 'hidden'
+                    })
+                    .catch(function () {
+                        document.getElementById('error').className = '';
+                    });
+            }
+        }
+
         const checkboxes = document.querySelectorAll('.checked')
         for (let i = 0; i < checkboxes.length; i++) {
             checkbox = checkboxes[i];
             checkbox.onchange = function (e) {
-                // console.log('event', e);
                 const completed = e.target.checked;
                 const todo_id = e.target.dataset['id'];
                 fetch('/todos/' + todo_id + '/set-completed', {
@@ -55,39 +106,33 @@
                             'Content-Type': 'application/json'
                         }
                     })
+                    .then(function (response) {
+                        return response.json();
+                    })
                     .then(function () {
                         document.getElementById('error').className = 'hidden'
-
                     })
                     .catch(function () {
                         document.getElementById('error').className = '';
                     });
             }
         }
-        document.getElementById('form').onsubmit = function (e) {
-            e.preventDefault();
-            fetch('/todos/create', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        'description': document.getElementById('description').value
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(function (response) {
-                    return response.json();
-                })
-                .then(function (jsonResponse) {
-                    console.log(jsonResponse);
-                    let liItem = document.createElement('li')
-                    liItem.innerHTML = jsonResponse['description']
-                    document.getElementById('todos').appendChild(liItem);
-                    document.getElementById('error').className = 'hidden'
-                })
-                .catch(function () {
-                    document.getElementById('error').className = '';
-                });
+
+        const deleted = document.querySelectorAll('.deleted')
+        for (let i = 0; i < deleted.length; i++) {
+            deleted_todo = deleted[i];
+            deleted_todo.onclick = function (e) {
+                const todo_id = e.target.dataset['id'];
+                fetch('/todos/' + todo_id, {
+                        method: 'DELETE'
+                    })
+                    .then(function () {
+                        document.getElementById('error').className = 'hidden'
+                    })
+                    .catch(function () {
+                        document.getElementById('error').className = '';
+                    });
+            }
         }
     </script>
 </body>
