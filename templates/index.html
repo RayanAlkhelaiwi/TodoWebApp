@@ -33,11 +33,37 @@
 
     <ul id="todos">
         {% for d in data %}
-        <li> <input type="checkbox" {% if d.completed %} checked {% endif %}> {{ d.description }}</li>
+        <li> <input class="checked" type="checkbox" data-id="{{ d.id }}" {% if d.completed %} checked {% endif %}>
+            {{ d.description }}</li>
         {% endfor %}
     </ul>
 
     <script>
+        const checkboxes = document.querySelectorAll('.checked')
+        for (let i = 0; i < checkboxes.length; i++) {
+            checkbox = checkboxes[i];
+            checkbox.onchange = function (e) {
+                // console.log('event', e);
+                const completed = e.target.checked;
+                const todo_id = e.target.dataset['id'];
+                fetch('/todos/' + todo_id + '/set-completed', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            'completed': completed
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(function () {
+                        document.getElementById('error').className = 'hidden'
+
+                    })
+                    .catch(function () {
+                        document.getElementById('error').className = '';
+                    });
+            }
+        }
         document.getElementById('form').onsubmit = function (e) {
             e.preventDefault();
             fetch('/todos/create', {
