@@ -10,6 +10,13 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
+class TodoList(db.Model):
+    __tablename__ = 'todolists'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    todos = db.relationship('Todo', backref='list', lazy=True)
+
+
 class Todo(db.Model):
     __tablename__ = 'todos'
     id = db.Column(db.Integer, primary_key=True)
@@ -19,11 +26,25 @@ class Todo(db.Model):
         'todolists.id'), nullable=False)
 
 
-class TodoList(db.Model):
-    __tablename__ = 'todolists'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(), nullable=False)
-    todos = db.relationship('Todo', backref='list', lazy=True)
+# order_items = db.Table('order_items',
+#     db.Column('order_id', db.Integer, db.ForeignKey('order.id'), primary_key=True),
+#     db.Column('product_id', db.Integer, db.ForeignKey('product.id'), primary_key=True)
+# )
+
+
+# class Order(db.Model):
+#     __tablename__ = 'order'
+#     id = db.Column(db.Integer, primary_key=True)
+#     status = db.Column(db.String(), nullable=False)
+#     products = db.relationship(
+#         'Product', secondary=order_items, backref=db.backref('orders', lazy=True))
+
+
+# class Product(db.Model):
+#     __tablename__ = 'product'
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(), nullable=False)
+
     # Returns a printable statement showing the results of the table (For testing)
     # def __repr__(self):
     #     return f'<Todo {self.id}: {self.description}>'
